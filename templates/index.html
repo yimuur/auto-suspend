@@ -1,0 +1,254 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Auto Suspend Console</title>
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg" />
+    <link rel="stylesheet" href="/static/style.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <!-- 顶部导航栏 -->
+      <header class="topbar">
+        <div class="logo-section">
+          <svg class="logo-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"></circle>
+            <path d="M12 6v6l4 2"></path>
+          </svg>
+          <div>
+            <span class="logo-text">Auto Suspend</span>
+            <span class="logo-subtitle">监控控制台</span>
+          </div>
+        </div>
+        <nav class="nav-tabs">
+          <button class="nav-tab active" data-tab="overview">总览</button>
+          <button class="nav-tab" data-tab="charts">图表</button>
+          <button class="nav-tab" data-tab="config">配置</button>
+          <button class="nav-tab" data-tab="logs">日志</button>
+        </nav>
+      </header>
+
+      <!-- 主内容区 -->
+      <main class="main-content">
+        <!-- 概览标签页 -->
+        <section id="overview" class="tab-pane active">
+          <div class="container">
+            <!-- 状态卡片组 -->
+            <div class="status-cards">
+              <div class="card status-card primary" id="state-card">
+                <div class="card-icon">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <polyline points="12 6 12 12 16 14"></polyline>
+                  </svg>
+                </div>
+                <div class="card-content">
+                  <div class="card-label">当前状态</div>
+                  <div class="card-value" id="state-value">--</div>
+                  <div class="card-meta" id="state-meta">加载中...</div>
+                </div>
+              </div>
+
+              <div class="card status-card" id="suspend-card">
+                <div class="card-icon icon-success" id="suspend-icon" role="button" tabindex="0" title="点击切换休眠开关">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M18.36 6.64a9 9 0 1 1-12.73 0"></path>
+                    <line x1="12" y1="2" x2="12" y2="12"></line>
+                  </svg>
+                </div>
+                <div class="card-content">
+                  <div class="card-label">自动休眠</div>
+                  <div class="card-value">
+                    <span id="suspend-toggle">ON</span>
+                  </div>
+                  <div class="card-meta" id="last-suspend-meta">上次休眠: --</div>
+                </div>
+              </div>
+
+              <div class="card status-card">
+                <div class="card-icon">
+                  <!-- 月亮图标：贴合“休眠时长”含义 -->
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                  </svg>
+                </div>
+                <div class="card-content">
+                  <div class="card-label">休眠时长</div>
+                  <div class="card-value" id="idle-value">--</div>
+                  <div class="card-meta" id="idle-meta">上次唤醒: --</div>
+                </div>
+              </div>
+
+              <div class="card status-card">
+                <div class="card-icon">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+                  </svg>
+                </div>
+                <div class="card-content">
+                  <div class="card-label">连续运行</div>
+                  <div class="card-value" id="uptime-value">--</div>
+                  <div class="card-meta">自上次唤醒</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 状态变更记录：当前状态变化时读取最新 journalctl 日志显示 -->
+            <div class="status-change" id="status-change" hidden>
+              <svg class="status-change-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+              </svg>
+              <div class="status-change-content">
+                <div class="status-change-label">状态变更</div>
+                <div class="status-change-message" id="status-change-message">--</div>
+              </div>
+              <span class="status-change-time" id="status-change-time">--</span>
+            </div>
+
+            <!-- 配置信息和系统信息 -->
+            <div class="info-grid">
+              <div class="card info-card">
+                <div class="card-header">
+                  <h3>休眠设置</h3>
+                </div>
+                <div class="info-list">
+                  <div class="info-item">
+                    <span class="info-label">监测间隔</span>
+                    <span class="info-value" id="interval-value">--</span>
+                  </div>
+                  <div class="info-item">
+                    <span class="info-label">允许窗口</span>
+                    <span class="info-value window-emphasis" id="window-value">--</span>
+                  </div>
+                  <div class="info-item">
+                    <span class="info-label">空闲要求</span>
+                    <span class="info-value" id="idle-req-value">--</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="card info-card" id="system-info-card">
+                <div class="card-header">
+                  <h3>系统信息</h3>
+                </div>
+                <div class="info-list">
+                  <div class="info-item">
+                    <span class="info-label">主机名</span>
+                    <span class="info-value" id="hostname-value">--</span>
+                  </div>
+                  <div class="info-item">
+                    <span class="info-label">平台</span>
+                    <span class="info-value" id="platform-value">--</span>
+                  </div>
+                  <div class="info-item">
+                    <span class="info-label">休眠失败</span>
+                    <span class="info-value" id="fail-value">-</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 连续休眠失败禁用提示 + 手动移除限制按钮（置于卡片下方，不改变卡片尺寸） -->
+            <div class="disable-banner" id="disable-banner" hidden>
+              <div class="disable-banner-text">
+                <span class="disable-banner-icon">⚠</span>
+                <span>自动休眠脚本已因连续休眠失败被禁用，请确认系统正常后手动恢复</span>
+              </div>
+              <button class="btn btn-sm btn-danger" id="clear-disable-btn">手动移除禁用限制</button>
+            </div>
+          </div>
+        </section>
+
+        <!-- 图表标签页 -->
+        <section id="charts" class="tab-pane">
+          <div class="container">
+            <!-- 顶部：已挂载磁盘 / 网络 当前累计吞吐量 -->
+            <div class="charts-section-head">
+              <div>
+                <h2 class="section-title">吞吐量概览</h2>
+                <p class="section-subtitle">当前累计吞吐量（自本次开机）</p>
+              </div>
+            </div>
+            <div id="charts-drives" class="drive-cards">
+              <div class="loading-spinner">加载磁盘数据...</div>
+            </div>
+
+            <!-- 历史采样柱状图 -->
+            <div class="charts-section-head">
+              <div>
+                <h2 class="section-title">历史采样柱状图</h2>
+                <p class="section-subtitle" id="charts-window-info">采样间隔加载中...</p>
+              </div>
+              <label class="charts-window-select">
+                <span>时间范围</span>
+                <select id="charts-window-select">
+                  <option value="21600">最近 6 小时</option>
+                  <option value="86400">最近一天</option>
+                  <option value="604800">最近一周</option>
+                </select>
+              </label>
+            </div>
+            <div id="charts-container" class="charts-grid">
+              <div class="loading-spinner">加载采样数据...</div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 配置标签页 -->
+        <section id="config" class="tab-pane">
+          <div class="container">
+            <div class="card config-card">
+              <div class="card-header">
+                <h3>编辑配置</h3>
+                <p class="card-subtitle">修改自动休眠脚本的配置参数</p>
+              </div>
+
+              <!-- 配置表单容器 -->
+              <div id="config-form-container" class="config-form">
+                <div class="loading-spinner">加载配置中...</div>
+              </div>
+
+              <div class="editor-toolbar">
+                <span class="editor-info" id="editor-info">准备就绪</span>
+                <div class="editor-actions">
+                  <button class="btn btn-sm btn-outline" id="reset-config-btn">恢复默认</button>
+                  <button class="btn btn-sm btn-primary" id="save-config-btn">保存修改</button>
+                </div>
+              </div>
+
+              <div id="config-notice" class="notice" aria-live="polite"></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 日志标签页 -->
+        <section id="logs" class="tab-pane">
+          <div class="container">
+            <div class="card logs-card">
+              <div class="card-header">
+                <h3>实时日志</h3>
+                <p class="card-subtitle">Auto Suspend 服务日志 (来自 journalctl)</p>
+              </div>
+              <div class="logs-controls">
+                <button class="btn btn-sm btn-outline" id="load-logs-btn">加载日志</button>
+                <button class="btn btn-sm btn-outline" id="clear-logs-btn">清空显示</button>
+                <span class="logs-count" id="logs-count">准备加载...</span>
+              </div>
+              <div class="logs-container" id="logs-container">
+                <div class="logs-empty">点击"加载日志"按钮查看实时日志</div>
+              </div>
+            </div>
+          </div>
+        </section>
+      </main>
+
+      <!-- 底部 -->
+      <footer class="footer">
+        <p>Auto Suspend Console • 最后更新: <span id="update-time">--:--:--</span></p>
+      </footer>
+    </div>
+
+    <script src="/static/app.js"></script>
+  </body>
+</html>

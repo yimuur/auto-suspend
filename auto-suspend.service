@@ -1,0 +1,26 @@
+[Unit]
+Description=Automatic suspend when system is idle
+ConditionPathExists=__SCRIPT__
+Conflicts=shutdown.target
+After=network.target
+
+[Service]
+User=root
+Type=oneshot
+# 与 Web UI 共用同一份 config（安装脚本渲染时替换 __WEB_DIR__），
+# 使从 Web 修改的 config.json 能被主脚本读取生效
+Environment=AUTO_SUSPEND_CONFIG_DIR=__WEB_DIR__/config
+ExecStart=__SCRIPT__
+
+# [CRITICAL] 防止脚本在系统休眠期间被 Systemd 杀掉
+TimeoutStartSec=infinity
+
+NoNewPrivileges=false
+PrivateTmp=true
+ProtectHome=true
+ProtectControlGroups=true
+ProtectKernelModules=true
+
+# 性能优化
+Nice=10
+IOSchedulingClass=idle

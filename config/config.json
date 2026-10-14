@@ -1,0 +1,12 @@
+{
+  "idle_detection": {
+    "resume_cooldown_minutes": {
+      "value": 270
+    }
+  },
+  "learning_parameters": {
+    "learn_window": {
+      "value": 120
+    }
+  }
+}

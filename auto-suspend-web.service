@@ -1,0 +1,21 @@
+[Unit]
+Description=Auto Suspend Web UI
+Wants=auto-suspend.timer
+After=network.target auto-suspend.timer
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=__WEB_DIR__
+Environment=WEB_HOST=__WEB_HOST__
+Environment=WEB_PORT=__WEB_PORT__
+ExecStart=__PYTHON__ __WEB_DIR__/app.py
+Restart=on-failure
+RestartSec=5
+
+# 轻量安全加固（不影响读写 /run/auto-suspend 与配置文件）
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

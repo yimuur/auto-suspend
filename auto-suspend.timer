@@ -1,0 +1,11 @@
+[Unit]
+Description=Run idle suspend check every __INTERVAL__
+
+[Timer]
+OnBootSec=__ONBOOT__
+OnUnitActiveSec=__INTERVAL__
+AccuracySec=30s
+Persistent=true
+
+[Install]
+WantedBy=timers.target

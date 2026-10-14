@@ -1,0 +1,144 @@
+{
+  "description": "auto-suspend 自动休眠脚本配置文件",
+  "general": {
+    "suspend_enabled": {
+      "value": true,
+      "description": "总开关：是否允许脚本执行休眠"
+    },
+    "allow_hdd_standby": {
+      "value": true,
+      "description": "设置休眠前是否先对机械硬盘下发停转指令"
+    },
+    "disable_bluetooth": {
+      "value": true,
+      "description": "设置是否关闭蓝牙模块，以防影响系统休眠"
+    },
+    "disable_usb_wakeup": {
+      "value": true,
+      "description": "设置是否禁止 USB 设备唤醒，防止异常唤醒"
+    }
+  },
+  "suspend_window": {
+    "hour_start": {
+      "value": 0,
+      "description": "允许休眠窗口的开始小时（0-24，0 即 0:00；大于结束时间为跨天窗口，如 22-6）"
+    },
+    "hour_end": {
+      "value": 24,
+      "description": "允许休眠窗口的结束小时（0-24，24 即 24:00；开始=0 且结束=24 表示全天允许）"
+    }
+  },
+  "check_interval": {
+    "minutes": {
+      "value": 5,
+      "unit": "分钟",
+      "description": "脚本执行间隔（需与 Systemd Timer 周期一致）"
+    },
+    "seconds": {
+      "value": 300,
+      "unit": "秒",
+      "description": "脚本执行间隔（需与 Systemd Timer 周期一致）"
+    }
+  },
+  "idle_detection": {
+    "idle_minutes_required": {
+      "value": 60,
+      "unit": "分钟",
+      "description": "需持续满足空闲条件的总时长"
+    },
+    "resume_cooldown_minutes": {
+      "value": 300,
+      "unit": "分钟",
+      "description": "唤醒后强制保持活跃的'冷却'时间，防止频繁开关机"
+    }
+  },
+  "learning_parameters": {
+    "learn_window": {
+      "value": 60,
+      "description": "阈值学习的数据窗口大小（用于计算第90百分位数作为动态阈值基线）"
+    },
+    "safety_factor": {
+      "value": 120,
+      "unit": "百分比",
+      "description": "安全因子百分比，使用整数避免小数，提高效率。例如 120 表示将学得的阈值提高 20%"
+    }
+  },
+  "network_thresholds": {
+    "description": "设置所有物理网卡总的 IO 流量阈值",
+    "min_net": {
+      "value": 409600,
+      "unit": "字节",
+      "note": "约 400KB/5min",
+      "description": "网络允许的最小总流量（用于阈值学习的下界）"
+    },
+    "max_net": {
+      "value": 20971520,
+      "unit": "字节",
+      "note": "约 20MB/5min",
+      "description": "网络允许的最大流量（用于阈值学习的上界）"
+    },
+    "net_activity_floor": {
+      "value": 5242880,
+      "unit": "字节",
+      "note": "约 5MB/5min",
+      "description": "硬性流量下限，只要高于此值就不能休眠（不受学习阈值影响）"
+    }
+  },
+  "hdd_thresholds": {
+    "description": "设置所挂载的每块 HDD 的 IO 数据量阈值（每盘独立计算，5min 周期）",
+    "min_hdd": {
+      "value": 128,
+      "unit": "扇区 (512B)",
+      "note": "约 64KB/5min",
+      "description": "HDD 允许的最小读写扇区数（用于容忍系统日志写入等微量活动）"
+    },
+    "max_hdd": {
+      "value": 4096,
+      "unit": "扇区 (512B)",
+      "note": "约 2MB/5min",
+      "description": "HDD 允许的最大读写扇区数（用于阈值学习的上界）"
+    }
+  },
+  "ssd_thresholds": {
+    "description": "设置所挂载的 SSD 总的 IO 读写数据量阈值（5min 周期）",
+    "min_ssd": {
+      "value": 2048,
+      "unit": "扇区 (512B)",
+      "note": "约 1MB/5min",
+      "description": "SSD 允许的最小读写扇区数（用于容忍系统日志写入等微量活动）"
+    },
+    "max_ssd": {
+      "value": 20480,
+      "unit": "扇区 (512B)",
+      "note": "约 10MB/5min",
+      "description": "SSD 允许的最大读写扇区数（用于阈值学习的上界）"
+    }
+  },
+  "cpu_thresholds": {
+    "cpu_load_max": {
+      "value": 0.8,
+      "description": "允许的 CPU 最大平均负载（Load Average 5分钟值）"
+    }
+  },
+  "web_access": {
+    "description": "Web 管理访问日志配置（按需修改）",
+    "web_access_log": {
+      "value": "/usr/trim/nginx/logs/access.log",
+      "description": "Nginx 访问日志文件路径，用于检测 Web 访问活动"
+    },
+    "web_active_window": {
+      "value": 1800,
+      "unit": "秒",
+      "note": "30 分钟",
+      "description": "Web 活跃检测时间窗口，在此时间内检测到访问则认为系统忙碌"
+    }
+  },
+  "notes": {
+    "state_directory": "/run/auto-suspend",
+    "state_persistence": "状态数据存储在内存中的 /run/auto-suspend 目录，系统重启后重置",
+    "fsm_states": "有限状态机状态包括: ACTIVE (活跃), IDLE (空闲), SUSPENDING (准备休眠), COOLDOWN (唤醒冷却)",
+    "metrics_hierarchy": "指标优先级: SSH/Web用户 > CPU负载 > 网络/SSD/HDD IO",
+    "learning_mechanism": "网络、SSD、HDD 的阈值支持自动学习，通过历史数据计算 P90 值应用安全因子来确定实际阈值",
+    "fail_safe": "任何异常（如配置、权限或环境问题）都不会触发休眠，确保系统安全"
+  }
+}

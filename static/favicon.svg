@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <!-- Auto Suspend 网页图标：深色圆角底 + 蓝色时钟（与顶栏 logo 风格一致） -->
+  <rect width="64" height="64" rx="14" fill="#0f1419"/>
+  <circle cx="32" cy="32" r="19" fill="none" stroke="#38bdf8" stroke-width="5"/>
+  <path d="M32 21v11l8 4.5" fill="none" stroke="#38bdf8" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
